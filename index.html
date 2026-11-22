@@ -21,6 +21,8 @@
   h1 { margin: 0; font-size: 48px; font-weight: 600; letter-spacing: -.01em; }
   p { margin: 12px 0 0; font-size: 18px; line-height: 1.5; }
   .soon { margin-top: 22px; font-family: system-ui, sans-serif; font-size: 14px; color: #5e584c; }
+  .btn { display: inline-block; margin-top: 22px; padding: 12px 22px; border-radius: 24px; background: #2f5d46; color: #fbf7ee; font-family: system-ui, sans-serif; font-size: 16px; font-weight: 700; text-decoration: none; }
+  .btn:focus-visible { outline: 3px solid #3d7cc4; outline-offset: 3px; }
   .bird { font-size: 34px; display: inline-block; animation: hop 2.4s ease-in-out infinite; }
   @keyframes hop { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
   @media (prefers-reduced-motion: reduce) { .bird { animation: none; } }
@@ -31,6 +33,7 @@
   <div class="bird" aria-hidden="true">&#x1F426;</div>
   <h1>Songroost</h1>
   <p>A sanctuary that sings, one day at a time.</p>
+  <a class="btn" href="birds.html">Browse the Amazon birds &rarr;</a>
   <p class="soon">The Amazon is being planted. The first playable version is on its way.</p>
 </main>
 </body>

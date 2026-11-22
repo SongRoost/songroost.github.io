@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Field guide · Songroost</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; color: #27251f; background: #f3ecdd; }
+  .top { position: sticky; top: 0; z-index: 2; padding: 14px 16px 10px; background: rgba(243,236,221,.94); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border-bottom: 1px solid #e2d8c4; }
+  .top a { color: #2f5d46; font-size: 14px; text-decoration: none; }
+  h1 { margin: 4px 0 2px; font-family: Georgia, "Times New Roman", serif; font-size: 28px; font-weight: 600; }
+  .sub { margin: 0; font-size: 14px; color: #5e584c; }
+  .filters { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .filters button { min-height: 36px; padding: 0 14px; border-radius: 18px; border: 1px solid #cdbfa3; background: #fbf7ee; color: #27251f; font-size: 14px; font-weight: 600; cursor: pointer; }
+  .filters button[aria-pressed="true"] { background: #27251f; border-color: #27251f; color: #fbf7ee; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(165px, 1fr)); gap: 14px; padding: 16px; max-width: 1200px; margin: 0 auto; }
+  @media (min-width: 700px) { .grid { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); } }
+
+  .card { container-type: inline-size; aspect-ratio: 2 / 3; display: flex; flex-direction: column; border-radius: 12px; overflow: hidden; color: #fbf7ee;
+          background: linear-gradient(180deg, color-mix(in srgb, var(--h) 96%, white) 0%, var(--h) 100%); box-shadow: 0 6px 16px rgba(39,37,31,.18); }
+  .card header { display: flex; justify-content: space-between; align-items: flex-start; gap: 2cqw; padding: 4cqw 4.5cqw 0; }
+  .card h3 { margin: 0; font-family: Georgia, "Times New Roman", serif; font-size: 7.6cqw; line-height: 1.1; font-weight: 600; }
+  .sci { margin: .6cqw 0 0; font-size: 4.6cqw; font-style: italic; opacity: .82; }
+  .cost { display: flex; align-items: center; gap: 1cqw; padding: 1.2cqw; border-radius: 2.4cqw; background: rgba(251,247,238,.92); flex: none; }
+  .fc { width: 8.4cqw; height: 8.4cqw; border-radius: 1.8cqw; display: inline-flex; align-items: center; justify-content: center; }
+  .or { color: #27251f; font-weight: 700; font-size: 5cqw; }
+  .habs { display: flex; flex-wrap: wrap; gap: 1.4cqw; padding: 2.2cqw 4.5cqw 0; }
+  .hp { padding: .6cqw 2.4cqw; border-radius: 3cqw; font-size: 4.1cqw; font-weight: 700; letter-spacing: .03em; box-shadow: inset 0 0 0 .5cqw rgba(251,247,238,.6); }
+  .hp.pred { background: rgba(39,37,31,.55); }
+  .pic { position: relative; flex: 1 1 auto; min-height: 0; margin: 1.6cqw 3cqw 0; border-radius: 3cqw;
+         background: radial-gradient(ellipse at 50% 55%, rgba(251,247,238,.5) 0%, rgba(251,247,238,.16) 60%, rgba(251,247,238,0) 75%); }
+  .pic svg { position: absolute; inset: 4% 4% 0; width: 92%; height: 96%; }
+  .ph { position: absolute; right: 2cqw; top: 1.6cqw; font-size: 3.4cqw; font-weight: 600; opacity: .7; }
+  .stats { display: flex; align-items: center; justify-content: space-between; gap: 2cqw; padding: 1.4cqw 4.5cqw 0; font-size: 4.6cqw; font-weight: 700; }
+  .stats span { display: inline-flex; align-items: center; gap: .8cqw; }
+  .eggs { gap: 0 !important; }
+  .power { margin: 2cqw 3cqw 0; padding: 2.4cqw 3cqw; border-radius: 2.6cqw; background: rgba(251,247,238,.94); color: #27251f; font-size: 4.5cqw; line-height: 1.32; }
+  .tg { display: inline-block; padding: .3cqw 1.8cqw; border-radius: 1.4cqw; color: #fbf7ee; font-size: 3.6cqw; font-weight: 800; letter-spacing: .08em; vertical-align: .2em; }
+  .tg.call { color: #27251f; box-shadow: inset 0 0 0 .5cqw #27251f; }
+  .nopw { font-style: italic; color: #5e584c; }
+  .card footer { display: flex; align-items: flex-end; justify-content: space-between; gap: 2cqw; padding: 2cqw 4cqw 3.4cqw; }
+  .fact { margin: 0; font-size: 3.8cqw; line-height: 1.3; font-style: italic; opacity: .92; }
+  .song { flex: none; min-height: 9cqw; padding: 0 2.8cqw; border-radius: 4.5cqw; border: 0; background: rgba(251,247,238,.92); color: #27251f; font-size: 3.9cqw; font-weight: 700; cursor: pointer; white-space: nowrap; }
+  .song:focus-visible, .filters button:focus-visible { outline: 3px solid #3d7cc4; outline-offset: 2px; }
+  .note { max-width: 1200px; margin: 0 auto; padding: 0 16px 28px; font-size: 13px; color: #5e584c; }
+</style>
+</head>
+<body>
+<div class="top">
+  <a href="./">&larr; Songroost</a>
+  <h1>Field guide · Amazon</h1>
+  <p class="sub" id="count"></p>
+  <div class="filters" role="group" aria-label="Show birds by habitat">
+    <button type="button" data-f="all" aria-pressed="true">All</button>
+    <button type="button" data-f="canopy" aria-pressed="false">Jungle canopy</button>
+    <button type="button" data-f="meadow" aria-pressed="false">Clearing</button>
+    <button type="button" data-f="shore" aria-pressed="false">River</button>
+    <button type="button" data-f="pred" aria-pressed="false">Predators</button>
+  </div>
+</div>
+<main class="grid" id="grid"></main>
+<p class="note">Draft deck. Drawings are placeholders until real photos are added, and “Play song” plays a stand-in chirp until real recordings are in. Each species has 3 copies in the deck, each marked male or female.</p>
+<script src="js/birds.js"></script>
+<script src="js/cards.js"></script>
+<script>
+(function () {
+  var birds = window.SONGROOST_BIRDS, grid = document.getElementById('grid'), count = document.getElementById('count');
+  function show(f) {
+    var list = birds.filter(function (b) { return f === 'all' || (f === 'pred' ? b.pred : b.hab.indexOf(f) >= 0); });
+    grid.innerHTML = list.map(SongroostArt.cardHTML).join('');
+    count.textContent = list.length + (list.length === 1 ? ' bird' : ' birds') + (f === 'all' ? ' in the Amazon deck' : '');
+  }
+  document.querySelectorAll('.filters button').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      document.querySelectorAll('.filters button').forEach(function (o) { o.setAttribute('aria-pressed', o === btn ? 'true' : 'false'); });
+      show(btn.dataset.f);
+    });
+  });
+  // Stand-in song: a short, soft synthesized phrase that differs per bird.
+  var ac = null;
+  function chirp(id) {
+    var A = window.AudioContext || window.webkitAudioContext; if (!A) return;
+    ac = ac || new A(); if (ac.state === 'suspended') ac.resume();
+    var h = 0; for (var i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;
+    var base = 1400 + (h % 1800), notes = 3 + (h % 4), t = ac.currentTime + .03;
+    for (var n = 0; n < notes; n++) {
+      var o = ac.createOscillator(), g = ac.createGain(), f = base * (1 + ((h >> n) % 5) * .08), d = .09 + ((h >> (n + 3)) % 4) * .03;
+      o.type = 'sine'; o.frequency.setValueAtTime(f, t); o.frequency.exponentialRampToValueAtTime(f * (n % 2 ? .78 : 1.22), t + d);
+      g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.12, t + .015); g.gain.exponentialRampToValueAtTime(.0008, t + d);
+      o.connect(g); g.connect(ac.destination); o.start(t); o.stop(t + d + .02); t += d + .05;
+    }
+  }
+  grid.addEventListener('click', function (e) { var b = e.target.closest('.song'); if (b) chirp(b.dataset.song); });
+  show('all');
+})();
+</script>
+</body>
+</html>
