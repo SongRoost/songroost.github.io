@@ -6,7 +6,7 @@
   var FOODC = { insect: '#5f7a22', grain: '#8c6a14', berry: '#8e2f4a', fish: '#2f6487', prey: '#6b5747' };
   var settings = { name: 'You', level: 'medium', rounds: 5 };
   try { var saved = JSON.parse(localStorage.getItem('songroost.settings') || 'null'); if (saved) settings = Object.assign(settings, saved); } catch (e) {}
-  var G = null, ME = null, RIVAL = null, pend = null, sel = null, view = 'me', raf = 0, screen = 'setup';
+  var G = null, ME = null, RIVAL = null, pend = null, sel = null, view = 'me', raf = 0, screen = 'setup', zoom = null;
 
   function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
   function chip(f, sm) { return '<span class="chip' + (sm ? ' sm' : '') + '" style="background:' + FOODC[f] + '" title="' + f + '">' + A.icon('food-' + f, sm ? 15 : 20, '#fbf7ee') + '</span>'; }
@@ -71,8 +71,21 @@
   function render() {
     if (screen === 'setup') return renderSetup();
     if (screen === 'start') return renderStart();
-    if (screen === 'end') return renderEnd();
-    renderGame();
+    if (screen === 'end') { zoom = null; renderZoom(); return renderEnd(); }
+    renderGame(); renderZoom();
+  }
+  function renderZoom() {
+    var el = document.getElementById('zoom');
+    if (!zoom) { el.hidden = true; el.innerHTML = ''; return; }
+    var b = zoom.b, info = '', take = '';
+    if (zoom.x) {
+      var x = zoom.x, mate = x.paired ? 'Paired ♥ (its mate guards the nest)' : 'Not paired';
+      info = '<ul class="zinfo"><li><b>' + (x.card.sex === 'M' ? '♂ Male' : '♀ Female') + '</b> · ' + esc(zoom.owner) + '</li><li>Eggs <b>' + x.eggs + ' of ' + x.b.eggs + '</b>' + (x.eggs >= 4 || x.eggs >= x.b.eggs ? ' · nesting, safe from Lure' : '') + '</li><li>Cached food <b>' + x.cache + '</b> · Tucked cards <b>' + x.tucked + '</b></li><li>' + mate + '</li>' +
+        (b.pred ? '' : '') + '<li>Strike chance against it: <b>' + E.strikeChance(x) + '%</b></li></ul>';
+    } else if (zoom.card) info = '<p class="zinfo">' + (zoom.card.sex === 'M' ? '♂ Male' : '♀ Female') + (zoom.where ? ' · ' + esc(zoom.where) : '') + '</p>';
+    if (zoom.opt != null && pend && pend.kind === 'choose' && pend.req === zoom.req) take = '<button type="button" class="primary" data-act="zoomtake">Take this card</button>';
+    el.hidden = false;
+    el.innerHTML = '<div class="zback" data-act="zoomclose"></div><div class="zbox" role="dialog" aria-modal="true" aria-label="' + esc(b.name) + '"><div class="zcard">' + A.cardHTML(b) + '</div>' + info + '<div class="zbtns">' + take + '<button type="button" class="ghost" data-act="zoomclose">Close</button></div></div>';
   }
   function seg(name, val, opts) { return '<div class="seg" role="group">' + opts.map(function (o) { return '<button type="button" data-set="' + name + '" data-val="' + o[0] + '" aria-pressed="' + (String(val) === String(o[0])) + '">' + o[1] + (o[2] ? '<small>' + o[2] + '</small>' : '') + '</button>'; }).join('') + '</div>'; }
   function renderSetup() {
@@ -118,27 +131,41 @@
     });
     return t;
   }
+  function ensureSkeleton() {
+    if (document.getElementById('gameRoot')) return;
+    var S = window.SongroostScene; S.injectCss();
+    app.innerHTML = '<div class="game" id="gameRoot"><header class="topbar" id="gTop"></header><div class="maincol"><div class="tabs" id="gTabs"></div><div class="boardwrap"><div class="board" id="gBoard">' +
+      E.HABS.map(function (h) { return '<div class="row ' + h + '" id="row-' + h + '"><div class="scene"><div class="scn">' + S.row(h) + '</div><div class="tint"></div></div><div class="rowc" id="rowc-' + h + '"></div></div>'; }).join('') +
+      '</div></div></div><aside class="side" id="gSide"></aside></div><div id="gDock"></div>';
+    S.fit(app);
+  }
+  function setHTML(id, html) { var el = document.getElementById(id); if (el && el.__h !== html) { el.innerHTML = html; el.__h = html; } }
+  var TINT = ['rgba(255,196,140,.20)', 'rgba(255,255,255,0)', 'rgba(255,248,220,.12)', 'rgba(240,120,80,.22)', 'rgba(16,28,70,.42)'];
   function renderGame() {
+    ensureSkeleton();
     var p = view === 'rival' ? RIVAL : ME, t = choiceTargets(), myTurn = pend && pend.kind === 'action';
     var acts = G.rounds === 4 ? [8, 7, 6, 5] : [8, 7, 6, 5, 4], tot = acts[G.round - 1] || 0, goal = G.goals[G.round - 1];
     function dots(pl) { var s = ''; for (var i = 0; i < tot; i++) s += '<span class="dot' + (i >= pl.actions ? ' used' : '') + '"></span>'; return '<span class="dots" aria-label="' + pl.actions + ' turns left">' + s + '</span>'; }
     var sMe = E.score(G, ME).total, sR = E.score(G, RIVAL).total;
-    var top = '<header class="topbar"><span class="round">Round ' + G.round + ' · ' + E.todName(G) + '</span>' +
+    setHTML('gTop', '<span class="round">Round ' + G.round + ' · ' + E.todName(G) + '</span>' +
       '<span class="goal">Goal: <b>' + esc(goal ? goal.text : '') + '</b> — you ' + (goal ? goal.f(ME) : 0) + ', rival ' + (goal ? goal.f(RIVAL) : 0) + '</span>' +
-      '<span class="scores"><span>' + esc(ME.name) + ' ' + sMe + ' ' + dots(ME) + '</span><span>Rival ' + sR + ' ' + dots(RIVAL) + '</span></span></header>';
+      '<span class="scores"><span>' + esc(ME.name) + ' ' + sMe + ' ' + dots(ME) + '</span><span>Rival ' + sR + ' ' + dots(RIVAL) + '</span></span>');
     var pairs = myTurn ? E.pairOptions(G, ME) : [];
-    var tabs = '<div class="tabs"><button type="button" data-view="me" aria-pressed="' + (view === 'me') + '">Your sanctuary</button><button type="button" data-view="rival" aria-pressed="' + (view === 'rival') + '">Rival’s sanctuary</button>' +
+    setHTML('gTabs', '<button type="button" data-view="me" aria-pressed="' + (view === 'me') + '">Your sanctuary</button><button type="button" data-view="rival" aria-pressed="' + (view === 'rival') + '">Rival’s sanctuary</button>' +
       '<span class="who night-ink">' + (G.current === ME.i ? 'Your turn' : G.current === RIVAL.i ? 'The Rival Keeper is playing…' : '') + '</span>' +
-      (pairs.length ? '<button type="button" class="pairbtn" data-act="pair">♥ Pair up</button>' : '') + '</div>';
-    var board = '<div class="boardwrap"><div class="board">' + E.HABS.map(function (h) { return renderRow(p, h, t, myTurn && view === 'me'); }).join('') + '</div></div>';
+      (pairs.length ? '<button type="button" class="pairbtn" data-act="pair">♥ Pair up</button>' : ''));
+    var tod = todIndex(), board = document.getElementById('gBoard');
+    board.classList.toggle('dusk', tod >= 3); board.classList.toggle('night', tod === 4);
+    Array.prototype.forEach.call(board.querySelectorAll('.tint'), function (el) { el.style.background = TINT[tod]; });
+    E.HABS.forEach(function (h) { var r = renderRow(p, h, t, myTurn && view === 'me'); document.getElementById('row-' + h).classList.toggle('dim', r.dim); setHTML('rowc-' + h, r.html); });
     var feeder = '<div class="box"><h3>Feeding Stump</h3><div class="feeder">' + G.feeder.map(function (d, i) { var pk = t.die[i] != null; return '<button type="button" class="die' + (pk ? ' pick' : '') + '"' + (pk ? ' data-opt="' + t.die[i] + '"' : ' tabindex="-1"') + ' aria-label="' + d + ' die">' + dieFace(d) + '</button>'; }).join('') + Array(6 - G.feeder.length).join('<span class="die empty"></span>') + '</div></div>';
-    var tray = '<div class="box"><h3>Sightings</h3><div class="tray">' + G.tray.map(function (c, i) { if (!c) return '<span class="mini" style="background:rgba(0,0,0,.06)"></span>'; var b = E.card(G, c), pk = t.tray[i] != null; return '<button type="button" class="mini' + (pk ? ' pick' : '') + '" style="background:' + A.HAB[b.hab[0]][0] + '"' + (pk ? ' data-opt="' + t.tray[i] + '"' : ' tabindex="-1"') + '><span class="art">' + A.drawBird(b) + '</span><span class="nm">' + esc(b.name) + '</span><span class="meta">' + b.pts + ' pts · ' + b.food.map(function (f) { return f === 'any' ? '★' : chip(f, 1); }).join('') + '</span></button>'; }).join('') +
+    var tray = '<div class="box"><h3>Sightings <small>tap a card to look closer</small></h3><div class="tray">' + G.tray.map(function (c, i) { if (!c) return '<span class="mini" style="background:rgba(0,0,0,.06)"></span>'; var b = E.card(G, c), pk = t.tray[i] != null; return '<button type="button" class="mini' + (pk ? ' pick' : '') + '" style="background:' + A.HAB[b.hab[0]][0] + '" data-zoomtray="' + i + '"><span class="art">' + A.drawBird(b) + '</span><span class="nm">' + esc(b.name) + '</span><span class="meta"><b>' + b.pts + '</b>' + b.food.map(function (f) { return f === 'any' ? '<span class="chip sm anyc">★</span>' : chip(f, 1); }).join(b.foodOr ? '/' : '') + '</span></button>'; }).join('') +
       '<button type="button" class="deckbtn' + (t.deck != null ? ' pick' : '') + '"' + (t.deck != null ? ' data-opt="' + t.deck + '"' : ' tabindex="-1"') + '>Deck<br>' + G.deck.length + '</button></div></div>';
-    var sup = '<div class="box"><h3>Your supply</h3><div class="supply">' + E.FOODS.map(function (f) { return '<span>' + chip(f, 1) + ME.food[f] + '</span>'; }).join('') + '<span>🥚 ' + E.totalEggs(ME) + '</span><span>🃏 ' + ME.hand.length + '</span>' + (ME.ribbons ? '<span>♥ ' + ME.ribbons + '</span>' : '') + '</div>' +
-      '<p class="rivalsum" style="margin:8px 0 0">Rival: ' + E.FOODS.map(function (f) { return RIVAL.food[f]; }).reduce(function (a, b) { return a + b; }, 0) + ' food · ' + RIVAL.hand.length + ' cards · ' + E.allBirds(RIVAL).length + ' birds · ' + E.totalEggs(RIVAL) + ' eggs</p></div>';
+    var rival = '<div class="box"><h3>Rival Keeper</h3><div class="supply">' + E.FOODS.map(function (f) { return '<span>' + chip(f, 1) + RIVAL.food[f] + '</span>'; }).join('') + '</div><p class="rivalsum" style="margin:8px 0 0">' + RIVAL.hand.length + ' cards in hand · ' + E.allBirds(RIVAL).length + ' birds · ' + E.totalEggs(RIVAL) + ' eggs</p></div>';
     var logBox = '<div class="box"><h3>Field notes</h3><div class="log">' + G.log.slice(-30).reverse().map(function (l) { return '<p>' + esc(l.text) + '</p>'; }).join('') + '</div></div>';
-    app.innerHTML = '<div class="game">' + top + '<div style="display:flex;flex-direction:column;gap:8px;min-width:0">' + tabs + board + '</div><aside class="side">' + feeder + tray + sup + logBox + '</aside></div>' + renderDock(t);
-    var land = app.querySelector('.bird.land'); if (land) land.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    setHTML('gSide', feeder + tray + rival + logBox);
+    setHTML('gDock', renderDock(t));
+    var land = app.querySelector('.bird.land'); if (land && !land.__seen) { land.__seen = 1; land.scrollIntoView({ block: 'nearest', inline: 'nearest' }); }
   }
   function renderRow(p, h, t, interactive) {
     var row = p.board[h], n = row.length, kind = E.ROWACT[h];
@@ -157,7 +184,7 @@
         else slots += '<div class="slot">' + eggCost(i) + '</div>';
       } else slots += '<div class="slot">' + eggCost(i) + '</div>';
     }
-    return '<div class="row ' + h + (chk && !chk.lives ? ' dim' : '') + '">' + act + slots + '</div>';
+    return { html: act + slots, dim: !!(chk && !chk.lives) };
   }
   function eggCost(i) { var c = E.EGG_COST[i] || 0; if (!c) return '<span>Free</span>'; var s = ''; for (var k = 0; k < c; k++) s += '<span class="egg"></span>'; return '<span class="ec" aria-label="Costs ' + c + ' egg">' + s + '</span>'; }
   function renderBird(x, h, t, owner) {
@@ -165,7 +192,7 @@
     for (var k = 0; k < x.b.eggs; k++) eggs += '<span class="egg' + (k < x.eggs ? '' : ' e') + '"></span>';
     var chance = pk && pend.req.kind === 'strike' ? '<span class="chance">' + E.strikeChance(x) + '%</span>' : '';
     var cls = 'bird ' + h + (pk ? ' pick' : '') + (G.activeBird === x.card.uid ? ' active' : '') + (G.justPlaced === x.card.uid ? ' land' : '');
-    var tag = pk ? 'button type="button" data-opt="' + t.bird[x.card.uid] + '"' : 'div';
+    var tag = pk ? 'button type="button" data-opt="' + t.bird[x.card.uid] + '"' : 'button type="button" data-zoom="' + owner.i + ':' + x.card.uid + '"';
     return '<' + tag + ' class="' + cls + '" title="' + esc(x.b.name + (x.b.kind ? ' — ' + x.b.kind + ': ' + x.b.power : '')) + '">' + chance +
       '<span class="tags"><span class="badge sex">' + (x.card.sex === 'M' ? '♂' : '♀') + '</span>' + (x.paired ? '<span class="badge pair">♥</span>' : '') + (x.cache ? '<span class="badge">●' + x.cache + '</span>' : '') + (x.tucked ? '<span class="badge">▤' + x.tucked + '</span>' : '') + '</span>' +
       '<span class="art">' + A.drawBird(x.b) + '</span><span class="nm">' + esc(x.b.name) + '</span><span class="meta"><span>♪' + x.b.pts + '</span><span class="eggs">' + eggs + '</span></span></' + tag.split(' ')[0] + '>';
@@ -175,7 +202,7 @@
     if (pend && pend.kind === 'action') {
       msg = sel ? 'Tap a glowing space to place your ' + esc(E.card(G, sel).name) + '<small>Blue means it can go there. Tap the card again to put it back.</small>'
         : 'Your turn: tap a bird to attract it, or choose Forage, Nest or Scout on your board<small>Then any SONG powers in that row play, right to left.</small>';
-      if (sel) opts = '<button type="button" class="opt skip" data-act="unsel">Put it back</button>';
+      if (sel) opts = '<button type="button" class="opt" data-act="zoomsel">🔍 Look closer</button><button type="button" class="opt skip" data-act="unsel">Put it back</button>';
     } else if (pend && pend.kind === 'choose') {
       var r = pend.req;
       msg = esc(r.prompt);
@@ -188,16 +215,20 @@
       var attrs = pk ? ' data-opt="' + t.card[c.uid] + '"' : (pend && pend.kind === 'action' ? ' data-sel="' + c.uid + '"' : '');
       return '<div role="button" tabindex="0" class="hc' + (pk ? ' pick' : '') + '"' + attrs + ' aria-pressed="' + (sel && sel.uid === c.uid) + '" aria-label="' + esc(b.name) + '">' + A.cardHTML(b) + '</div>';
     }).join('') : '<p class="empty">No birds in your hand. Scout the River to draw more.</p>';
-    return '<div class="dock"><div class="prompt"><div class="msg">' + msg + '</div>' + opts + keepCards + '</div><div class="hand" aria-label="Your hand">' + handHTML + '</div></div>';
+    var bar = '<div class="supplybar" aria-label="Your supply">' + E.FOODS.map(function (f) { return '<span class="sb" title="' + f + '">' + chip(f) + '<b>' + ME.food[f] + '</b></span>'; }).join('') +
+      '<span class="sb sep" title="Eggs on your birds"><span class="chip eggc">' + A.icon('egg', 22, '#27251f') + '</span><b>' + E.totalEggs(ME) + '</b></span><span class="sb" title="Cards in hand"><span class="chip cardc">🂠</span><b>' + ME.hand.length + '</b></span>' + (ME.ribbons ? '<span class="sb" title="Pair ribbons"><span class="chip pairc">♥</span><b>' + ME.ribbons + '</b></span>' : '') + '</div>';
+    return '<div class="dock">' + bar + '<div class="prompt"><div class="msg">' + msg + '</div>' + opts + keepCards + '</div><div class="hand" aria-label="Your hand">' + handHTML + '</div></div>';
   }
 
   // ---------- events ----------
   document.addEventListener('click', function (e) {
-    var el = e.target.closest('[data-set],[data-act],[data-opt],[data-sel],[data-place],[data-view],[data-keep],[data-food],.song');
+    var el = e.target.closest('[data-set],[data-act],[data-opt],[data-sel],[data-place],[data-view],[data-keep],[data-food],[data-zoom],[data-zoomtray],.song');
     if (!el) return;
     if (el.classList.contains('song')) { e.stopPropagation(); chirp(el.dataset.song, true); return; }
     if (el.dataset.set) { var v = el.dataset.val; settings[el.dataset.set] = el.dataset.set === 'rounds' ? +v : v; var nm = document.getElementById('nm'); if (nm) settings.name = nm.value; render(); return; }
     if (el.dataset.view) { view = el.dataset.view; render(); return; }
+    if (el.dataset.zoom) { var zp = el.dataset.zoom.split(':'), owner = G.players[+zp[0]], zx = byUid(owner, +zp[1]); if (zx) { zoom = { b: zx.b, x: zx, owner: owner === ME ? 'Your sanctuary' : owner.name + '’s sanctuary' }; chirp(zx.b.id, true); render(); } return; }
+    if (el.dataset.zoomtray != null) { var ti = +el.dataset.zoomtray, tc = G.tray[ti], tt = choiceTargets(); if (tc) { zoom = { b: E.card(G, tc), card: tc, where: 'In the Sightings', opt: tt.tray[ti], req: pend && pend.req }; render(); } return; }
     if (el.dataset.keep) { pend.keep[el.dataset.keep] = !pend.keep[el.dataset.keep]; render(); return; }
     if (el.dataset.food) { pend.food[el.dataset.food] = !pend.food[el.dataset.food]; render(); return; }
     if (el.dataset.opt != null && pend && pend.kind === 'choose') { var o = pend.req.options[+el.dataset.opt]; if (o) { if (o.food === undefined && pend.req.kind === 'die') {} resolve(o.value); } return; }
@@ -211,6 +242,9 @@
       var p = pend; pend = null; screen = 'game'; p.res({ keep: keep, discardFood: drop }); schedule(); return;
     }
     if (a === 'again') { screen = 'setup'; G = null; render(); return; }
+    if (a === 'zoomclose') { zoom = null; render(); return; }
+    if (a === 'zoomtake') { var zo = zoom; zoom = null; if (zo && pend && pend.kind === 'choose' && pend.req === zo.req) resolve(pend.req.options[zo.opt].value); else render(); return; }
+    if (a === 'zoomsel' && sel) { zoom = { b: E.card(G, sel), card: sel, where: 'In your hand' }; render(); return; }
     if (!pend) return;
     if (a === 'unsel') { sel = null; render(); return; }
     if (a === 'skip' && pend.kind === 'choose') { resolve(null); return; }
@@ -223,7 +257,7 @@
       render(); return;
     }
   });
-  document.addEventListener('keydown', function (e) { if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('[role="button"]')) { e.preventDefault(); e.target.click(); } });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && zoom) { zoom = null; render(); return; } if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('[role="button"]')) { e.preventDefault(); e.target.click(); } });
   window.__songroost = function () { return { G: G, pend: pend, sel: sel, screen: screen, view: view }; };
   render();
 })();
