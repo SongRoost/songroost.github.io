@@ -21,7 +21,9 @@
   h1 { margin: 0; font-size: 48px; font-weight: 600; letter-spacing: -.01em; }
   p { margin: 12px 0 0; font-size: 18px; line-height: 1.5; }
   .soon { margin-top: 22px; font-family: system-ui, sans-serif; font-size: 14px; color: #5e584c; }
-  .btn { display: inline-block; margin-top: 22px; padding: 12px 22px; border-radius: 24px; background: #2f5d46; color: #fbf7ee; font-family: system-ui, sans-serif; font-size: 16px; font-weight: 700; text-decoration: none; }
+  .btns { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-top: 22px; }
+  .btn { display: inline-block; min-width: 230px; padding: 13px 22px; border-radius: 26px; background: #2f5d46; color: #fbf7ee; font-family: system-ui, sans-serif; font-size: 17px; font-weight: 700; text-decoration: none; }
+  .btn.alt { background: #fbf7ee; color: #2f5d46; box-shadow: inset 0 0 0 2px #2f5d46; font-size: 15px; }
   .btn:focus-visible { outline: 3px solid #3d7cc4; outline-offset: 3px; }
   .bird { font-size: 34px; display: inline-block; animation: hop 2.4s ease-in-out infinite; }
   @keyframes hop { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
@@ -33,8 +35,11 @@
   <div class="bird" aria-hidden="true">&#x1F426;</div>
   <h1>Songroost</h1>
   <p>A sanctuary that sings, one day at a time.</p>
-  <a class="btn" href="birds.html">Browse the Amazon birds &rarr;</a>
-  <p class="soon">The Amazon is being planted. The first playable version is on its way.</p>
+  <div class="btns">
+    <a class="btn" href="play.html">Play against the Rival Keeper</a>
+    <a class="btn alt" href="birds.html">Browse the Amazon birds</a>
+  </div>
+  <p class="soon">First playable version. Placeholder drawings and stand-in bird songs for now; real photos, recordings and the living Amazon board come next.</p>
 </main>
 </body>
 </html>
