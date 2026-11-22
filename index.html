@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Songroost</title>
+<meta name="description" content="Songroost — a relaxing bird-collecting game.">
+<style>
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    font-family: Georgia, "Times New Roman", serif; color: #27251f;
+    background: linear-gradient(180deg, #dfeccf 0%, #a9c96a 62%, #8f8458 62%, #7d7348 100%);
+  }
+  main {
+    margin: 24px; padding: 36px 32px; max-width: 440px; text-align: center;
+    background: rgba(251, 247, 238, .82); border-radius: 18px;
+    box-shadow: 0 12px 32px rgba(39, 37, 31, .18);
+  }
+  h1 { margin: 0; font-size: 48px; font-weight: 600; letter-spacing: -.01em; }
+  p { margin: 12px 0 0; font-size: 18px; line-height: 1.5; }
+  .soon { margin-top: 22px; font-family: system-ui, sans-serif; font-size: 14px; color: #5e584c; }
+  .bird { font-size: 34px; display: inline-block; animation: hop 2.4s ease-in-out infinite; }
+  @keyframes hop { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+  @media (prefers-reduced-motion: reduce) { .bird { animation: none; } }
+</style>
+</head>
+<body>
+<main>
+  <div class="bird" aria-hidden="true">&#x1F426;</div>
+  <h1>Songroost</h1>
+  <p>A sanctuary that sings, one day at a time.</p>
+  <p class="soon">The Amazon is being planted. The first playable version is on its way.</p>
+</main>
+</body>
+</html>
